@@ -1,0 +1,34 @@
+{
+  "drift_id": "DRIFT-00003",
+  "overall_drift_score": 27.113,
+  "feature_drift": {
+    "src_bytes": 42.5205,
+    "dst_bytes": 21.6364,
+    "duration": 14.8904,
+    "packet_rate": 17.3484,
+    "connection_count": 2.6414,
+    "failed_logins": 19.3905,
+    "event_frequency": 18.5187,
+    "event_interval": 19.5402,
+    "protocol_encoding": 13.3315,
+    "event_type_encoding": 14.9594
+  },
+  "anomaly_drift": 42.5232,
+  "faiss_drift": 19.3552,
+  "drift_detected": true,
+  "retrain_recommended": true,
+  "affected_features": [
+    "src_bytes",
+    "dst_bytes",
+    "duration",
+    "packet_rate",
+    "connection_count",
+    "failed_logins",
+    "event_frequency",
+    "event_interval",
+    "protocol_encoding",
+    "event_type_encoding"
+  ],
+  "summary": "Drift score 27.113 | Features drifted: 10/10 | Retrain: YES",
+  "evaluated_at": "2026-05-20T20:40:25.796820"
+}

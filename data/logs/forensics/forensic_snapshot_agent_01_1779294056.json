@@ -1,0 +1,15 @@
+{
+  "campaign_id": "snapshot_agent_01",
+  "recorded_at": 1779294056.2869413,
+  "context": {
+    "host_id": "agent_01",
+    "trigger_reason": "High Confidence Anomaly",
+    "context_captured": {
+      "active_processes": [
+        "powershell.exe",
+        "cmd.exe"
+      ],
+      "timestamp": 1779294056.2869413
+    }
+  }
+}

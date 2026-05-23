@@ -1,0 +1,101 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# IMMUNEX Layer 5 — Docker Compose
+# Production deployment: IMMUNEX + Ollama (local LLM)
+# ─────────────────────────────────────────────────────────────────────────────
+
+version: "3.9"
+
+services:
+
+  # ── IMMUNEX Core ────────────────────────────────────────────────────────────
+  immunex:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    image: immunex:5.0.0-layer5
+    container_name: immunex_core
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - immunex_data:/app/data
+      - immunex_logs:/app/data/logs
+      - immunex_reports:/app/data/reports
+    environment:
+      - IMMUNEX_OLLAMA_URL=http://ollama:11434
+      - IMMUNEX_LOG_LEVEL=INFO
+      - IMMUNEX_API_HOST=0.0.0.0
+      - IMMUNEX_API_PORT=8080
+    depends_on:
+      - ollama
+    networks:
+      - immunex_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 8G
+        reservations:
+          cpus: "1.0"
+          memory: 2G
+
+  # ── Ollama Local LLM ────────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: immunex_ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_models:/root/.ollama
+    networks:
+      - immunex_net
+    # CPU-only — remove 'deploy' section and add GPU support if available
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 8G
+
+  # ── IMMUNEX API-only (for horizontal scaling) ────────────────────────────────
+  immunex_api:
+    image: immunex:5.0.0-layer5
+    container_name: immunex_api
+    restart: unless-stopped
+    command: ["python", "main.py", "--api-only"]
+    ports:
+      - "8081:8080"
+    volumes:
+      - immunex_data:/app/data:ro
+      - immunex_reports:/app/data/reports:ro
+    environment:
+      - IMMUNEX_OLLAMA_URL=http://ollama:11434
+    depends_on:
+      - immunex
+    networks:
+      - immunex_net
+    profiles:
+      - scale   # Only started with: docker compose --profile scale up
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  immunex_data:
+    driver: local
+  immunex_logs:
+    driver: local
+  immunex_reports:
+    driver: local
+  ollama_models:
+    driver: local
+
+# ── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  immunex_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
