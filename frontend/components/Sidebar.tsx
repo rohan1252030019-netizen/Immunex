@@ -12,7 +12,9 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
-  Radio
+  Radio,
+  FileText,
+  Award
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -23,6 +25,8 @@ export default function Sidebar() {
   const menuItems = [
     { id: 'dashboard', label: 'Command Center', icon: Shield },
     { id: 'alerts', label: 'Alert Stream', icon: Terminal },
+    { id: 'underwriting', label: 'Underwriting Desk', icon: FileText },
+    { id: 'compliance', label: 'RBI Compliance', icon: Award },
     { id: 'graph', label: 'Attack Graph', icon: Network },
     { id: 'mitre', label: 'MITRE Matrix', icon: Target },
     { id: 'copilot', label: 'AI Copilot Chat', icon: Bot },

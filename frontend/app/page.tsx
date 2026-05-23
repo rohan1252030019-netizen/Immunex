@@ -14,6 +14,8 @@ import CopilotChat from '../components/CopilotChat';
 import ThreatTimeline from '../components/ThreatTimeline';
 import ClusterMonitor from '../components/ClusterMonitor';
 import ExecutiveDash from '../components/ExecutiveDash';
+import UnderwritingConsole from '../components/UnderwritingConsole';
+import ComplianceScorecard from '../components/ComplianceScorecard';
 
 import { Shield, Lock, User, Terminal, AlertTriangle, Key } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -92,6 +94,10 @@ export default function Home() {
         );
       case 'alerts':
         return <AlertStream />;
+      case 'underwriting':
+        return <UnderwritingConsole />;
+      case 'compliance':
+        return <ComplianceScorecard />;
       case 'graph':
         return <AttackGraph />;
       case 'mitre':
