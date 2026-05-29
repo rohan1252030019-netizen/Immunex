@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: immunex-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deployment/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deployment/certs:/etc/nginx/certs:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - immunex-network
+    restart: always
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./deployment/Dockerfile.backend
+    container_name: immunex-backend
+    environment:
+      - DATABASE_URL=postgresql://immunex_admin:secure_banking_password@postgres:5432/immunex_db
+      - REDIS_URL=redis://redis:6379/0
+      - CLICKHOUSE_HOST=clickhouse
+      - ENVIRONMENT=production
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - immunex-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: immunex-frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8080
+    networks:
+      - immunex-network
+    restart: always
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: immunex-postgres
+    environment:
+      - POSTGRES_DB=immunex_db
+      - POSTGRES_USER=immunex_admin
+      - POSTGRES_PASSWORD=secure_banking_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deployment/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - immunex-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U immunex_admin -d immunex_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: immunex-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    networks:
+      - immunex-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    restart: always
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24-alpine
+    container_name: immunex-clickhouse
+    volumes:
+      - chdata:/var/lib/clickhouse
+    networks:
+      - immunex-network
+    restart: always
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: ./deployment/Dockerfile.backend
+    container_name: immunex-celery-worker
+    command: celery -A compliance_engine.celery_app worker --loglevel=info -c 2
+    environment:
+      - DATABASE_URL=postgresql://immunex_admin:secure_banking_password@postgres:5432/immunex_db
+      - REDIS_URL=redis://redis:6379/0
+      - CLICKHOUSE_HOST=clickhouse
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - immunex-network
+    restart: always
+
+networks:
+  immunex-network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  chdata:
